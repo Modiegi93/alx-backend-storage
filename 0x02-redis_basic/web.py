@@ -24,15 +24,9 @@ def count_requests(method: Callable) -> Callable:
 
     return wrapper
 
-    
+
 @count_requests
 def get_page(url: str) -> str:
     """Get the html content of a url"""
     req = requests.get(url)
     return req.text
-
-
-if __name__ == "__main__":
-    url = "http://slowwly.robertomurray.co.uk"
-    page_content = get_page(url)
-    print(page_content)
