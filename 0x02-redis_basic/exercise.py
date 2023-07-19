@@ -43,6 +43,7 @@ class Cache:
         """Initializing class"""
         self._redis = redis.Redis()
         self._redis.flushdb()
+        self.redis = self._redis
 
     @call_history
     @count_calls
@@ -73,7 +74,7 @@ class Cache:
 
 def replay(method: Callable):
     """Display the history of calls"""
-    key = method.__qualname
+    key = method.__qualname__
     inputs = key + ":inputs"
     outputs = key + ":outputs"
     redis = method.__self__.redis
