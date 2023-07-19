@@ -23,17 +23,19 @@ def call_history(method: Callable) -> Callable:
         return output
     return wrapped
 
+
 def count_calls(method: Callable) -> Callable:
-        """ Returns a Callable"""
-        key = method.__qualname__
+    """ Returns a Callable"""
+    key = method.__qualname__
 
-        @functools.wraps(method)
-        def wrapped(self, *args, **kwargs):
-            """Accesses the Redis instance"""
-            self._redis.incr(key)
-            return method(self, *args, **kwargs)
+    @functools.wraps(method)
+    def wrapped(self, *args, **kwargs):
+        """Accesses the Redis instance"""
+        self._redis.incr(key)
+        return method(self, *args, **kwargs)
 
-        return wrapped
+    return wrapped
+
 
 class Cache:
     """Cache class"""
@@ -41,7 +43,7 @@ class Cache:
         """Initializing class"""
         self._redis = redis.Redis()
         self._redis.flushdb()
-    
+
     @call_history
     @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
@@ -50,7 +52,8 @@ class Cache:
         self._redis.set(key, data)
         return key
 
-    def get(self, key: str, fn: Callable = None) -> Union[str, bytes, int, None]:
+    def get(self, key: str, fn: Callable = None) -> Union[str,
+                                                          bytes, int, None]:
         """Convert data back to desired format"""
         data = self._redis.get(key)
         if data is None:
@@ -65,22 +68,18 @@ class Cache:
 
     def get_int(self, key: str) -> Union[int, None]:
         """Convert to int"""
-        return self.get(key, fn=int) if self._redis.get(key) is not None else None
+        return self.get(key, fn=int) if self._redis.get(key) else None
+
 
 def replay(method: Callable):
     """Display the history of calls"""
     key_inputs = method.__qualname__ + ":inputs"
     key_outputs = method.__qualname__ + ":outputs"
 
-    inputs = [eval(input_str) for input_str in cache._redis.lrange(key_inputs, 0, -1)]
+    inputs = [eval(input_str) for input_str in
+              cache._redis.lrange(key_inputs, 0, -1)]
     outputs = cache._redis.lrange(key_outputs, 0, -1)
 
     print(f"{method.__qualname__} was called {len(inputs)} times:")
     for inp, out in zip(inputs, outputs):
         print(f"{method.__qualname__}{str(inp)} -> {out.decode()}")
-
-
-if __name__ == "__main__":
-    cache = Cache()
-
-    cache
